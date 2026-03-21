@@ -20,6 +20,7 @@ class RealChromosome:
         RealChromosome.num_params = <int>
         RealChromosome.sigma_lower_bound = <int>
     """
+
     num_params = None
     sigma_lower_bound = None
 

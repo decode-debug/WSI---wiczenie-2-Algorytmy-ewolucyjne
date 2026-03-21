@@ -1,4 +1,7 @@
-from evolution_algorythym.evolution_algorytym import EvolutionStrategy, RealChromosome
+from evolution_algorythym.evolution_algorytym import (
+    EvolutionStrategy,
+    RealChromosome,
+)
 
 
 def return_evolutionary_strategy_parameters():

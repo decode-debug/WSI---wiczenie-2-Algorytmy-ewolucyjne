@@ -27,7 +27,7 @@ class chromosome:
         for i in range(self.num_params):
             # Cut out 8 bit part
             bit_chunk = self.genes[
-                i * self.leght_of_params : (i + 1) * self.leght_of_params
+                i * self.leght_of_params: (i + 1) * self.leght_of_params
             ]
             # change bits into numbers
             val = int("".join(str(b) for b in bit_chunk), 2)
@@ -133,56 +133,56 @@ class genetic_evolution:
         return child1, child2
 
     def genetic_algorithm(self):
-            """Main function to run the genetic algorithm."""
-            self.population = self.generate_population()
-    
+        """Main function to run the genetic algorithm."""
+        self.population = self.generate_population()
+
+        # find best one
+        best_global_chromosome = min(self.population, key=lambda x: x.fitness)
+        best_global_fitness = best_global_chromosome.fitness
+
+        history_best = []
+
+        for generation in range(self.generations):
+
+            new_population = []
+
+            while len(new_population) < self.population_size:
+                # parents selection
+                parent1 = self.tournament_selection()
+                parent2 = self.tournament_selection()
+
+                # hybridization
+                child1, child2 = self.hybridize(parent1, parent2)
+
+                # mutation
+                child1.mutate(self.mutation_rate)
+                child2.mutate(self.mutation_rate)
+
+                # add children to population
+                new_population.extend([child1, child2])
+
+            # double check population length and define new population
+            self.population = new_population[: self.population_size]
+
             # find best one
-            best_global_chromosome = min(self.population, key=lambda x: x.fitness)
-            best_global_fitness = best_global_chromosome.fitness
-            
-            history_best = []
-    
-            for generation in range(self.generations):
-    
-                new_population = []
-    
-                while len(new_population) < self.population_size:
-                    # parents selection
-                    parent1 = self.tournament_selection()
-                    parent2 = self.tournament_selection()
-    
-                    # hybridization
-                    child1, child2 = self.hybridize(parent1, parent2)
-    
-                    # mutation
-                    child1.mutate(self.mutation_rate)
-                    child2.mutate(self.mutation_rate)
-    
-                    # add children to population
-                    new_population.extend([child1, child2])
-    
-                # double check population length and define new population
-                self.population = new_population[: self.population_size]
-    
-                # find best one
-                best_local_chromosome = min(
-                    self.population, key=lambda x: x.fitness
-                )
-                best_local_fitness = best_local_chromosome.fitness
-    
-                # find best child
-                if best_local_fitness < best_global_fitness:
-                    best_global_fitness = best_local_fitness
-                    best_global_chromosome = copy.deepcopy(best_local_chromosome)
-                
-                history_best.append(best_global_fitness)
-    
-                # log evoultion
-                if generation % 1 == 0 or generation == self.generations - 1:
-                    print(
-                        f"Pokolenie {generation:3d} "
-                        f"| Najlepszy dotychczasowy wynik (błąd):"
-                        f" {best_global_fitness:.4f}"
-                    )
-                    
-            return best_global_chromosome, best_global_fitness, history_best
+            best_local_chromosome = min(
+                self.population, key=lambda x: x.fitness
+            )
+            best_local_fitness = best_local_chromosome.fitness
+
+            # find best child
+            if best_local_fitness < best_global_fitness:
+                best_global_fitness = best_local_fitness
+                best_global_chromosome = copy.deepcopy(best_local_chromosome)
+
+            history_best.append(best_global_fitness)
+
+            # # log evoultion
+            # if generation % 1 == 0 or generation == self.generations - 1:
+            #     print(
+            #         f"Pokolenie {generation:3d} "
+            #         f"| Najlepszy dotychczasowy wynik (błąd):"
+            #         f" {best_global_fitness:.4f}"
+            #     )
+
+        return best_global_chromosome, best_global_fitness, history_best
