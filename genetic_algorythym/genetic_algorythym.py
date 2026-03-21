@@ -27,9 +27,8 @@ class chromosome:
         for i in range(self.num_params):
             # Cut out 8 bit part
             bit_chunk = self.genes[
-                i * self.leght_of_params: (i + 1) * self.leght_of_params
+                i * self.leght_of_params : (i + 1) * self.leght_of_params
             ]
-            print(bit_chunk)
             # change bits into numbers
             val = int("".join(str(b) for b in bit_chunk), 2)
             real_values.append(val)
@@ -73,7 +72,7 @@ class chromosome:
         )
 
 
-class genetic_evoution:
+class genetic_evolution:
     """Class representing the genetic algorithm."""
 
     def __init__(

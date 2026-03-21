@@ -1,28 +1,42 @@
-from evolution_algorythym import genetic_evoution
+from evolution_algorytym import EvolutionStrategy, RealChromosome
 
 
-def return_genetic_algorithm_parameters():
-    """Return parameters for the genetic algorithm."""
-    chrom_length = 10
+def return_evolutionary_strategy_parameters():
+    """Return parameters for the evolutionary strategy algorithm (mu, 100)."""
+    evaluations_limit = 9000
+    lambda_ = 100
+    num_params = 10
+
     return {
-        "population_size": 100,
-        "chromosome_length": chrom_length,
-        "mutation_rate": 1 / chrom_length,
-        "crossover_rate": 0.7,
-        "num_generations": 50,
-        "selection_method": "tournament",
-        "tournament_size": 5,
-        "generations": 10,
+        "num_params": num_params,
+        "lambda_": lambda_,
+        "mu_values": [5, 15, 30],
+        "generations": evaluations_limit // lambda_,
+        "min_gene_val": -5.0,
+        "max_gene_val": 5.0,
+        "min_sigma": 0.5,
+        "max_sigma": 2.0,
+        "sigma_lower_bound": 1e-5,
     }
 
 
 def main():
-    """Main function to execute the genetic algorithm."""
-    params = return_genetic_algorithm_parameters()
-    ga = genetic_evoution(**params)
-    result = ga.genetic_algorithm()
-    print("Best chromosome:", result[0].genes)
-    print("Best fitness:", result[1])
+    # Load configuration
+    config = return_evolutionary_strategy_parameters()
+
+    # Inject class variables required by RealChromosome
+    RealChromosome.num_params = config["num_params"]
+    RealChromosome.sigma_lower_bound = config["sigma_lower_bound"]
+
+    results = {}
+
+    # Test for different values of mu
+    for mu in config["mu_values"]:
+        print(f"Running Evolution Strategy for mu = {mu}...")
+        es = EvolutionStrategy(mu=mu, config=config)
+        best_ind, history = es.run()
+        results[mu] = history
+        print(f"Best fitness found (error): {best_ind.fitness:.4f}\n")
 
 
 if __name__ == "__main__":

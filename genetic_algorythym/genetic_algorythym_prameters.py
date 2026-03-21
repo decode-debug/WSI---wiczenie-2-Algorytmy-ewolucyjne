@@ -1,4 +1,6 @@
-from genetic_algorythym import genetic_evoution
+from genetic_algorythym import genetic_evolution
+import os
+import time
 
 
 def return_genetic_algorithm_parameters():
@@ -21,13 +23,66 @@ def return_genetic_algorithm_parameters():
     }
 
 
+def clear_screen():
+    """Clears the terminal screen for a clean UI."""
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+def wait_for_double_enter():
+    """Waits for the user to press the Enter key twice consecutively."""
+    enters = 0
+    while enters < 2:
+        user_input = input()
+        if user_input == "":
+            enters += 1
+        else:
+            enters = 0
+
+
 def main():
-    """Main function to execute the genetic algorithm."""
-    params = return_genetic_algorithm_parameters()
-    ga = genetic_evoution(**params)
-    result = ga.genetic_algorithm()
-    print("Best chromosome:", result[0].genes)
-    print("Best fitness:", result[1])
+    """Main function to execute the genetic algorithm with a CLI interface."""
+    clear_screen()
+
+    # --- 1. Welcome Screen ---
+    print("=" * 60)
+    print(" " * 15 + "🧬 GENETIC ALGORITHM ENGINE 🧬")
+    print("=" * 60)
+    print("\nWelcome! The environment parameters are loaded and ready.")
+    print("The system is prepared to begin the evolutionary process.\n")
+
+    print("👉 Press [ENTER] twice to start...")
+    wait_for_double_enter()
+
+    # --- 2. Transition ---
+    clear_screen()
+    print("🚀 Initializing population and starting evolution...\n")
+    time.sleep(0.5)
+
+    # --- 3. Execute Core Logic ---
+    try:
+        params = return_genetic_algorithm_parameters()
+        ga = genetic_evolution(**params)
+
+        result = ga.genetic_algorithm()
+
+        # --- 4. Display Results ---
+        print("\n✨ EVOLUTION COMPLETE ✨")
+        print("-" * 60)
+        print(f"🏆 Best chromosome: {result[0].genes}")
+        print(f"📈 Best fitness:    {result[1]}")
+        print("-" * 60)
+
+        print("\nPress [ENTER] to exit the program.")
+        input()
+
+    except NameError as e:
+        print(f"\n❌ Error: {e}")
+        print(
+            "Make sure your genetic algorithm functions"
+            " and classes are defined above main()."
+        )
+    except Exception as e:
+        print(f"\n❌ An unexpected error occurred: {e}")
 
 
 if __name__ == "__main__":
