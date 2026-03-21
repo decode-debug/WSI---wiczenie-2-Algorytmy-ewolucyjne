@@ -25,6 +25,28 @@ class chromosome:
             if random.random() < mutation_rate:
                 self.genes[i] = 1 - self.genes[i]  # Flip the bit
 
+    def __add__(self, other):
+        """
+        Performs two-point crossover between two parents to produce offspring.
+        Usage: child1, child2 = parent1 + parent2
+        """
+        if not isinstance(other, chromosome):
+            raise TypeError(
+                "Można dodawać do siebie tylko obiekty klasy chromosome."
+            )
+
+        genes1 = self.genes
+        genes2 = other.genes
+        length = len(genes1)
+
+        # random points of cut
+        p1, p2 = sorted(random.sample(range(1, length), 2))
+
+        child1_genes = genes1[:p1] + genes2[p1:p2] + genes1[p2:]
+        child2_genes = genes2[:p1] + genes1[p1:p2] + genes2[p2:]
+
+        return chromosome(child1_genes), chromosome(child2_genes)
+
 
 class genetic_evoution:
     """Class representing the genetic algorithm."""
@@ -53,7 +75,9 @@ class genetic_evoution:
     def generate_population(self):
         """Generates a random population of binary chromosomes."""
         return [
-            chromosome([random.random() for _ in range(self.chromosome_length)])
+            chromosome(
+                [random.randint(0, 1) for _ in range(self.chromosome_length)]
+            )
             for _ in range(self.population_size)
         ]
 
@@ -65,23 +89,14 @@ class genetic_evoution:
         best_fighter = min(selected_fighters, key=lambda x: x.fitness)
         return best_fighter
 
-    def two_point_crossover(self, parent1, parent2):
-        """
-        Performs two-point crossover between two parents to produce offspring.
-        """
-        genes1 = parent1.genes
-        genes2 = parent2.genes
+    def hybridize(self, parent1, parent2):
         if random.random() < self.crossover_rate:
-            length = len(genes1)
-            # random points od cut
-            p1, p2 = sorted(random.sample(range(1, length), 2))
-
-            child1 = genes1[:p1] + genes2[p1:p2] + genes1[p2:]
-            child2 = genes2[:p1] + genes1[p1:p2] + genes2[p2:]
-            return chromosome(child1), chromosome(child2)
+            child1, child2 = parent1 + parent2
         else:
-            # if corssover not possible copy parents
-            return chromosome(genes1), chromosome(genes2)
+            # if crossover not possible copy parents
+            child1 = chromosome(parent1.genes.copy())
+            child2 = chromosome(parent2.genes.copy())
+        return child1, child2
 
     def genetic_algorithm(self):
         """Main function to run the genetic algorithm."""
@@ -101,7 +116,7 @@ class genetic_evoution:
                 parent2 = self.tournament_selection()
 
                 # hybridization
-                child1, child2 = self.two_point_crossover(parent1, parent2)
+                child1, child2 = self.hybridize(parent1, parent2)
 
                 # mutation
                 child1.mutate(self.mutation_rate)
@@ -125,7 +140,7 @@ class genetic_evoution:
                 best_global_chromosome = copy.deepcopy(best_local_chromosome)
 
             # log evoultion
-            if generation % 10 == 0 or generation == self.generations - 1:
+            if generation % 1 == 0 or generation == self.generations - 1:
                 print(
                     f"Pokolenie {generation:3d} "
                     f"| Najlepszy dotychczasowy wynik (błąd):"

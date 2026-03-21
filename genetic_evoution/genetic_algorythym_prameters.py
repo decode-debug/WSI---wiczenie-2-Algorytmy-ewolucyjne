@@ -12,7 +12,7 @@ def return_genetic_algorithm_parameters():
         "num_generations": 50,
         "selection_method": "tournament",
         "tournament_size": 5,
-        "generations": 100,
+        "generations": 10,
     }
 
 
