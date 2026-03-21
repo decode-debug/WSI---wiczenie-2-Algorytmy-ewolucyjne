@@ -14,16 +14,38 @@ def calibration_error(x):
 class chromosome:
     """Class representing a chromosome."""
 
-    def __init__(self, genes):
+    def __init__(self, genes, num_params, leght_of_params):
         self.genes = genes
         self.fitness = calibration_error(genes)
         self.number = uuid.uuid4()  # Unique identifier for the chromosome
+        self.num_params = num_params
+        self.leght_of_params = leght_of_params
+
+    def decode_genes(self):
+        """decodes parameters"""
+        real_values = []
+        for i in range(self.num_params):
+            # Cut out 8 bit part
+            bit_chunk = self.genes[
+                i * self.leght_of_params: (i + 1) * self.leght_of_params
+            ]
+            print(bit_chunk)
+            # change bits into numbers
+            val = int("".join(str(b) for b in bit_chunk), 2)
+            real_values.append(val)
+
+        return real_values
 
     def mutate(self, mutation_rate):
         """Mutates a chromosome based on the mutation rate."""
+        mutated = False
         for i in range(len(self.genes)):
             if random.random() < mutation_rate:
                 self.genes[i] = 1 - self.genes[i]  # Flip the bit
+                mutated = True
+
+        if mutated:
+            self.fitness = calibration_error(self.decode_genes())
 
     def __add__(self, other):
         """
@@ -45,7 +67,10 @@ class chromosome:
         child1_genes = genes1[:p1] + genes2[p1:p2] + genes1[p2:]
         child2_genes = genes2[:p1] + genes1[p1:p2] + genes2[p2:]
 
-        return chromosome(child1_genes), chromosome(child2_genes)
+        return (
+            chromosome(child1_genes, self.num_params, self.leght_of_params),
+            chromosome(child2_genes, self.num_params, self.leght_of_params),
+        )
 
 
 class genetic_evoution:
@@ -53,6 +78,8 @@ class genetic_evoution:
 
     def __init__(
         self,
+        num_params,
+        bits_per_param,
         population_size,
         chromosome_length,
         mutation_rate,
@@ -62,6 +89,8 @@ class genetic_evoution:
         tournament_size,
         generations,
     ):
+        self.num_params = num_params
+        self.bits_per_param = bits_per_param
         self.population_size = population_size
         self.chromosome_length = chromosome_length
         self.mutation_rate = mutation_rate
@@ -76,7 +105,9 @@ class genetic_evoution:
         """Generates a random population of binary chromosomes."""
         return [
             chromosome(
-                [random.randint(0, 1) for _ in range(self.chromosome_length)]
+                [random.randint(0, 1) for _ in range(self.chromosome_length)],
+                self.num_params,
+                self.bits_per_param,
             )
             for _ in range(self.population_size)
         ]
@@ -94,8 +125,12 @@ class genetic_evoution:
             child1, child2 = parent1 + parent2
         else:
             # if crossover not possible copy parents
-            child1 = chromosome(parent1.genes.copy())
-            child2 = chromosome(parent2.genes.copy())
+            child1 = chromosome(
+                parent1.genes.copy(), self.num_params, self.bits_per_param
+            )
+            child2 = chromosome(
+                parent2.genes.copy(), self.num_params, self.bits_per_param
+            )
         return child1, child2
 
     def genetic_algorithm(self):
@@ -146,6 +181,4 @@ class genetic_evoution:
                     f"| Najlepszy dotychczasowy wynik (błąd):"
                     f" {best_global_fitness:.4f}"
                 )
-
-        # Koniec pętli (t <- t + 1 robi się automatycznie w pętli for)
         return best_global_chromosome, best_global_fitness
