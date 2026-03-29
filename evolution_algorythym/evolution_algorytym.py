@@ -1,6 +1,9 @@
+"""Evolution Strategy implementation for optimization problems."""
+
 import numpy as np
 import copy
 import random
+import uuid
 
 
 def calibration_error(x):
@@ -8,17 +11,15 @@ def calibration_error(x):
     return 5 * len(x) + sum(xi**2 - 5 * np.cos(2 * np.pi * xi) for xi in x)
 
 
-class RealChromosome:
+class chromosome:
     """
     Class representing a chromosome with
     real-valued genes and self-adaptive sigma.
 
-
-
-            !!! DANEGER !!!
-    Class variables set before execution:
-        RealChromosome.num_params = <int>
-        RealChromosome.sigma_lower_bound = <int>
+            !!! DANGER !!!
+    Before execution set Class variables:
+        chromosome.num_params = <int>
+        chromosome.sigma_lower_bound = <float>
     """
 
     num_params = None
@@ -28,9 +29,10 @@ class RealChromosome:
         self.genes = np.array(genes, dtype=float)
         self.sigma = sigma
         self.fitness = calibration_error(self.genes)
+        self.number = uuid.uuid4()  # Unique identifier for the chromosome
 
     def mutate(self):
-        """Gaussian mutation with sigma self-adaptation."""
+        """Gaussian mutation with sigma self-adaptation (always occurs)."""
         tau = 1.0 / np.sqrt(self.num_params)
         self.sigma = self.sigma * np.exp(np.random.normal(0, tau))
         self.sigma = max(self.sigma, self.sigma_lower_bound)
@@ -39,17 +41,33 @@ class RealChromosome:
         self.genes += noise
         self.fitness = calibration_error(self.genes)
 
+    def __add__(self, other):
+        """
+        Performs arithmetic crossover between two parents to produce offspring.
+        Usage: child1, child2 = parent1 + parent2
+        """
+        if not isinstance(other, chromosome):
+            raise TypeError(
+                "Operands must be instances of the chromosome class."
+            )
 
-def arithmetic_crossover(parent1, parent2):
-    """Performs arithmetic crossover between two parents."""
-    alpha = random.random()
-    child_genes = alpha * parent1.genes + (1 - alpha) * parent2.genes
-    child_sigma = alpha * parent1.sigma + (1 - alpha) * parent2.sigma
+        # Generate two random alphas to create two distinct children
+        alpha1 = random.random()
+        alpha2 = random.random()
 
-    return RealChromosome(child_genes, child_sigma)
+        child1_genes = alpha1 * self.genes + (1 - alpha1) * other.genes
+        child1_sigma = alpha1 * self.sigma + (1 - alpha1) * other.sigma
+
+        child2_genes = alpha2 * self.genes + (1 - alpha2) * other.genes
+        child2_sigma = alpha2 * self.sigma + (1 - alpha2) * other.sigma
+
+        return (
+            chromosome(child1_genes, child1_sigma),
+            chromosome(child2_genes, child2_sigma),
+        )
 
 
-class EvolutionStrategy:
+class evolution_strategy:
     """Class representing the (mu, lambda) evolutionary strategy."""
 
     def __init__(self, mu, config):
@@ -63,40 +81,54 @@ class EvolutionStrategy:
         self.max_sigma = config["max_sigma"]
         self.population = []
 
-    def initialize_population(self):
+    def generate_population(self):
         """Generates the initial population of size mu."""
-        self.population = []
+        population = []
         for _ in range(self.mu):
             genes = np.random.uniform(
                 self.min_gene_val, self.max_gene_val, self.num_params
             )
             sigma = np.random.uniform(self.min_sigma, self.max_sigma)
-            self.population.append(RealChromosome(genes, sigma))
+            population.append(chromosome(genes, sigma))
+        return population
 
-    def run(self):
+    def evolution_algorithm(self):
         """Main loop of the (mu, lambda) algorithm."""
-        self.initialize_population()
+        self.population = self.generate_population()
 
         best_global_chromosome = min(self.population, key=lambda x: x.fitness)
+        best_global_fitness = best_global_chromosome.fitness
         history_best = []
 
         for _ in range(self.generations):
             offspring = []
 
-            for _ in range(self.lambda_):
+            # Generate lambda offspring
+            while len(offspring) < self.lambda_:
                 p1, p2 = random.sample(self.population, 2)
-                child = arithmetic_crossover(p1, p2)
-                child.mutate()
-                offspring.append(child)
+
+                child1, child2 = p1 + p2
+
+                child1.mutate()
+                child2.mutate()
+
+                offspring.extend([child1, child2])
+
+            # Ensure we strictly have lambda_ offspring if odd numbers are used
+            offspring = offspring[: self.lambda_]
 
             # (mu, lambda) selection: select best mu from offspring only
             offspring.sort(key=lambda x: x.fitness)
             self.population = offspring[: self.mu]
 
+            # find best one
             current_best = self.population[0]
-            if current_best.fitness < best_global_chromosome.fitness:
+            current_best_fitness = current_best.fitness
+
+            if current_best_fitness < best_global_fitness:
+                best_global_fitness = current_best_fitness
                 best_global_chromosome = copy.deepcopy(current_best)
 
-            history_best.append(best_global_chromosome.fitness)
+            history_best.append(best_global_fitness)
 
-        return best_global_chromosome, history_best
+        return best_global_chromosome, best_global_fitness, history_best

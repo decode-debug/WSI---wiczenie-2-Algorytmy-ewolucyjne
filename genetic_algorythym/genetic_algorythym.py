@@ -16,22 +16,26 @@ class chromosome:
 
     def __init__(self, genes, num_params, leght_of_params):
         self.genes = genes
-        self.fitness = calibration_error(genes)
-        self.number = uuid.uuid4()  # Unique identifier for the chromosome
         self.num_params = num_params
         self.leght_of_params = leght_of_params
+        self.fitness = calibration_error(self.decode_genes())
+        self.number = uuid.uuid4()  # Unique identifier for the chromosome
 
-    def decode_genes(self):
+    def decode_genes(self, min_val=-5.12, max_val=5.12):
         """decodes parameters"""
         real_values = []
+        max_int = (2 ** self.leght_of_params) - 1  # For 8 bits, this is 255
+
         for i in range(self.num_params):
-            # Cut out 8 bit part
             bit_chunk = self.genes[
                 i * self.leght_of_params: (i + 1) * self.leght_of_params
             ]
-            # change bits into numbers
             val = int("".join(str(b) for b in bit_chunk), 2)
-            real_values.append(val)
+
+            # Map the integer [0, 255]
+            # to the continuous range [min_val, max_val]
+            mapped_val = min_val + (val / max_int) * (max_val - min_val)
+            real_values.append(mapped_val)
 
         return real_values
 
@@ -46,6 +50,20 @@ class chromosome:
         if mutated:
             self.fitness = calibration_error(self.decode_genes())
 
+    def hybridize(self, parent2, crossover_rate):
+        """Decides whether to perform crossover and produces offspring."""
+        if random.random() < crossover_rate:
+            child1, child2 = self + parent2
+        else:
+            # if crossover not possible copy parents
+            child1 = chromosome(
+                self.genes.copy(), self.num_params, self.leght_of_params
+            )
+            child2 = chromosome(
+                parent2.genes.copy(), self.num_params, self.leght_of_params
+            )
+        return child1, child2
+
     def __add__(self, other):
         """
         Performs two-point crossover between two parents to produce offspring.
@@ -53,12 +71,17 @@ class chromosome:
         """
         if not isinstance(other, chromosome):
             raise TypeError(
-                "Można dodawać do siebie tylko obiekty klasy chromosome."
+                "Operands must be instances of the chromosome class."
             )
 
         genes1 = self.genes
         genes2 = other.genes
+
         length = len(genes1)
+        length2 = len(genes2)
+
+        if length != length2:
+            raise ValueError("Both chromosomes must have the same length.")
 
         # random points of cut
         p1, p2 = sorted(random.sample(range(1, length), 2))
@@ -119,19 +142,6 @@ class genetic_evolution:
         best_fighter = min(selected_fighters, key=lambda x: x.fitness)
         return best_fighter
 
-    def hybridize(self, parent1, parent2):
-        if random.random() < self.crossover_rate:
-            child1, child2 = parent1 + parent2
-        else:
-            # if crossover not possible copy parents
-            child1 = chromosome(
-                parent1.genes.copy(), self.num_params, self.bits_per_param
-            )
-            child2 = chromosome(
-                parent2.genes.copy(), self.num_params, self.bits_per_param
-            )
-        return child1, child2
-
     def genetic_algorithm(self):
         """Main function to run the genetic algorithm."""
         self.population = self.generate_population()
@@ -152,7 +162,9 @@ class genetic_evolution:
                 parent2 = self.tournament_selection()
 
                 # hybridization
-                child1, child2 = self.hybridize(parent1, parent2)
+                child1, child2 = parent1.hybridize(
+                    parent2, self.crossover_rate
+                )
 
                 # mutation
                 child1.mutate(self.mutation_rate)

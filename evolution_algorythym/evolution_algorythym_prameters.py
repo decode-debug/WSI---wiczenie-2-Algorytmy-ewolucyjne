@@ -1,6 +1,11 @@
-from evolution_algorythym.evolution_algorytym import (
-    EvolutionStrategy,
-    RealChromosome,
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from evolution_algorythym.evolution_algorytym import (  # noqa: E402
+    evolution_strategy,
+    chromosome,
 )
 
 
@@ -27,17 +32,17 @@ def main():
     # Load configuration
     config = return_evolutionary_strategy_parameters()
 
-    # Inject class variables required by RealChromosome
-    RealChromosome.num_params = config["num_params"]
-    RealChromosome.sigma_lower_bound = config["sigma_lower_bound"]
+    # Inject class variables required by chromosome
+    chromosome.num_params = config["num_params"]
+    chromosome.sigma_lower_bound = config["sigma_lower_bound"]
 
     results = {}
 
     # Test for different values of mu
     for mu in config["mu_values"]:
         print(f"Running Evolution Strategy for mu = {mu}...")
-        es = EvolutionStrategy(mu=mu, config=config)
-        best_ind, history = es.run()
+        es = evolution_strategy(mu=mu, config=config)
+        best_ind, best_fitness, history = es.evolution_algorithm()
         results[mu] = history
         print(f"Best fitness found (error): {best_ind.fitness:.4f}\n")
 

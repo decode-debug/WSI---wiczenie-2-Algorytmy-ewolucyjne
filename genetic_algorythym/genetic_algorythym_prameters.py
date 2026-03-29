@@ -1,6 +1,12 @@
-from genetic_algorythym.genetic_algorythym import genetic_evolution
+import sys
 import os
 import time
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from genetic_algorythym.genetic_algorythym import (  # noqa: E402
+    genetic_evolution,
+)
 
 
 def return_genetic_algorithm_parameters():
@@ -45,17 +51,17 @@ def main():
 
     # --- 1. Welcome Screen ---
     print("=" * 60)
-    print(" " * 15 + "🧬 GENETIC ALGORITHM ENGINE 🧬")
+    print(" " * 15 + "GENETIC ALGORITHM ENGINE")
     print("=" * 60)
     print("\nWelcome! The environment parameters are loaded and ready.")
     print("The system is prepared to begin the evolutionary process.\n")
 
-    print("👉 Press [ENTER] twice to start...")
+    print("Press [ENTER] twice to start...")
     wait_for_double_enter()
 
     # --- 2. Transition ---
     clear_screen()
-    print("🚀 Initializing population and starting evolution...\n")
+    print("Initializing population and starting evolution...\n")
     time.sleep(0.5)
 
     # --- 3. Execute Core Logic ---
@@ -66,23 +72,23 @@ def main():
         result = ga.genetic_algorithm()
 
         # --- 4. Display Results ---
-        print("\n✨ EVOLUTION COMPLETE ✨")
+        print("\nEVOLUTION COMPLETE")
         print("-" * 60)
-        print(f"🏆 Best chromosome: {result[0].genes}")
-        print(f"📈 Best fitness:    {result[1]}")
+        print(f"Best chromosome: {result[0].genes}")
+        print(f"Best fitness:    {result[1]}")
         print("-" * 60)
 
         print("\nPress [ENTER] to exit the program.")
         input()
 
     except NameError as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}")
         print(
             "Make sure your genetic algorithm functions"
             " and classes are defined above main()."
         )
     except Exception as e:
-        print(f"\n❌ An unexpected error occurred: {e}")
+        print(f"\nAn unexpected error occurred: {e}")
 
 
 if __name__ == "__main__":
