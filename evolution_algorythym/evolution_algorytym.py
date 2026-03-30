@@ -24,6 +24,8 @@ class chromosome:
 
     num_params = None
     sigma_lower_bound = None
+    min_gene_val = None
+    max_gene_val = None
 
     def __init__(self, genes, sigma):
         self.genes = np.array(genes, dtype=float)
@@ -33,12 +35,19 @@ class chromosome:
 
     def mutate(self):
         """Gaussian mutation with sigma self-adaptation (always occurs)."""
+        # generate a random scalar using tag for sigma adaptation
         tau = 1.0 / np.sqrt(self.num_params)
         self.sigma = self.sigma * np.exp(np.random.normal(0, tau))
+
+        # Ensure sigma does not go below the specified lower bound
         self.sigma = max(self.sigma, self.sigma_lower_bound)
 
+        # Mutate genes with Gaussian noise and clip to valid range
         noise = np.random.normal(0, self.sigma, size=self.num_params)
         self.genes += noise
+        self.genes = np.clip(self.genes, self.min_gene_val, self.max_gene_val)
+
+        # Recalculate fitness after mutation
         self.fitness = calibration_error(self.genes)
 
     def __add__(self, other):

@@ -35,6 +35,8 @@ def main():
     # Inject class variables required by chromosome
     chromosome.num_params = config["num_params"]
     chromosome.sigma_lower_bound = config["sigma_lower_bound"]
+    chromosome.min_gene_val = config["min_gene_val"]
+    chromosome.max_gene_val = config["max_gene_val"]
 
     results = {}
 

@@ -1,4 +1,6 @@
-"""Generate report.pdf from report.ipynb using nbconvert (HTML) + Playwright."""
+"""
+Generate report.pdf from report.ipynb using nbconvert (HTML) + Playwright.
+"""
 
 import asyncio
 import sys
@@ -8,6 +10,11 @@ import subprocess
 NOTEBOOK = "report.ipynb"
 HTML_OUT = "report.html"
 PDF_OUT = "report.pdf"
+
+# H2 headings that should each start a new page
+PAGE_BREAK_HEADINGS = [
+    "Przypadek A", "Przypadek B", "Wizualizacja", "Wnioski"
+]
 
 # Step 1: convert notebook → HTML
 python = sys.executable
@@ -33,6 +40,24 @@ async def html_to_pdf():
         browser = await p.chromium.launch()
         page = await browser.new_page()
         await page.goto(html_url, wait_until="networkidle")
+
+        # Inject page breaks before specific sections by manipulating the DOM
+        await page.evaluate(
+            """(targets) => {
+                document.querySelectorAll('h2').forEach(h2 => {
+                    if (targets.some(t => h2.textContent.includes(t))) {
+                        // Walk up to the nearest .jp-Cell container and break before it
+                        const cell = (
+                            h2.closest('.jp-Cell') || h2.parentElement
+                        );
+                        cell.style.breakBefore = 'page';
+                        cell.style.pageBreakBefore = 'always';
+                    }
+                });
+            }""",
+            PAGE_BREAK_HEADINGS,
+        )
+
         await page.pdf(
             path=PDF_OUT,
             format="A4",
